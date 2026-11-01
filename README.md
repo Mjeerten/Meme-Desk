@@ -18,7 +18,5 @@ No wallet, no real money here.
 
 Tests: `python -m pytest -q`.
 
-## Video analysis (for any chat)
-Paste TikTok / Shorts / Instagram links in a Claude chat that has this repo attached ("attach Mjeerten/Meme-Desk").
-Claude runs `.github/workflows/video.yml`: frames every second, speech transcript and caption land on the `videos`
-branch. You can also run it yourself: Actions -> video -> Run workflow -> paste link(s).
+## Video analysis
+Moved to the Toolbox repo (Mjeerten/Toolbox).

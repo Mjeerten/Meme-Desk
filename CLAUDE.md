@@ -19,7 +19,5 @@ Solana RPC or ntfy: everything that needs market data runs on GitHub Actions; re
 - Stage 3, paper trading only while Maarten watches: a workflow he starts himself, runs a set time, pushes paper
   trades to his phone, then stops. No wallet, no real money unless Maarten explicitly decides after a holdout pass.
 - Tests: `python -m pytest -q`.
-- Video links (TikTok etc.): `.github/workflows/video.yml` (input `urls`, space-separated; `every` = seconds per frame).
-  Runner downloads with yt-dlp, saves frames + whisper transcript + caption info and commits them to the `videos`
-  branch (videos/<extractor>-<id>/). Read with `git fetch origin videos` + `git show FETCH_HEAD:<path>` (artifact
-  downloads are blocked from Claude's container). Trigger: `gh api -X POST .../actions/workflows/video.yml/dispatches`.
+- Video links (TikTok etc.): moved to the public repo Mjeerten/Toolbox (`.github/workflows/video.yml`, see its CLAUDE.md).
+  The old analyses stay here on the `videos` branch and in RESULTS.md.
