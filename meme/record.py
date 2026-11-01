@@ -8,6 +8,9 @@ Output: data/YYYYMMDD-HHMM.csv.gz, one row per event, receive time in ms UTC:
   t_ms,type,mint,trader,sol,tokens,vsol,vtok,mcap_sol,extra
   type = create | buy | sell | migrate; extra = symbol|name|initial buy on create rows.
 
+Trades need a PumpPortal API key whose wallet holds >= 0.02 SOL (env PUMPPORTAL_API_KEY, GitHub secret).
+Without it only launches and migrations are recorded.
+
 Run:  python -m meme.record --minutes 345
 """
 from __future__ import annotations
@@ -88,6 +91,9 @@ class Recorder:
 async def run(minutes: float, out_dir: str = "data", watch_min: int = WATCH_MIN):
     import websockets
 
+    key = os.environ.get("PUMPPORTAL_API_KEY", "").strip()
+    url = f"{URL}?api-key={key}" if key else URL  # trade data needs a key funded with >= 0.02 SOL
+    print("api key:", "yes" if key else "NO (launches and migrations only, no trades)", flush=True)
     os.makedirs(out_dir, exist_ok=True)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M")
     rec = Recorder(os.path.join(out_dir, f"{stamp}.csv.gz"), watch_min)
@@ -97,7 +103,7 @@ async def run(minutes: float, out_dir: str = "data", watch_min: int = WATCH_MIN)
     try:
         while time.time() < end:
             try:
-                async with websockets.connect(URL, ping_interval=20, ping_timeout=20, max_size=2**22) as ws:
+                async with websockets.connect(url, ping_interval=20, ping_timeout=20, max_size=2**22) as ws:
                     await ws.send(json.dumps({"method": "subscribeNewToken"}))
                     await ws.send(json.dumps({"method": "subscribeMigration"}))
                     if rec.active:  # reconnect: pick the watched tokens back up

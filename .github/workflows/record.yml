@@ -43,6 +43,8 @@ jobs:
         run: |
           if (( MINUTES < 300 )); then echo "test run, not chaining"; elif [[ "$(date -u +%F)" < "$RECORD_UNTIL" ]]; then gh workflow run record.yml --ref "$GITHUB_REF_NAME"; echo "next run queued"; else echo "past RECORD_UNTIL, not chaining"; fi
       - name: record
+        env:
+          PUMPPORTAL_API_KEY: ${{ secrets.PUMPPORTAL_API_KEY }}
         run: |
           if [[ "$(date -u +%F)" > "$RECORD_UNTIL" ]]; then echo "past RECORD_UNTIL"; exit 0; fi
           python -m meme.record --minutes "$MINUTES"
