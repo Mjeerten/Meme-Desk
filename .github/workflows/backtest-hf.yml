@@ -3,6 +3,10 @@ name: backtest hf day
 # (meme/hf_data.py), run meme/backtest.py. Results in the log and artifact "backtest-hf-<run id>".
 on:
   workflow_dispatch:
+    inputs:
+      script:
+        description: "backtest (all families) or copytest (copy trading in depth)"
+        default: "backtest"
 permissions:
   contents: read
 jobs:
@@ -24,7 +28,7 @@ jobs:
           du -sh hf
       - run: python -m meme.hf_data hf hfdata && rm -rf hf
       - run: python -m meme.stats hfdata || true
-      - run: python -m meme.backtest hfdata
+      - run: python -m meme.${{ inputs.script || 'backtest' }} hfdata
       - uses: actions/upload-artifact@v4
         if: always()
         with:
