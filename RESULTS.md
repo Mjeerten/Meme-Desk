@@ -39,3 +39,27 @@ Copy simulation on the holdout (0.2 SOL, fees, curve fills, sell when the wallet
 
 Even with zero delay every copy variant loses ~5-8% per trade. Conclusion: the people who make money on pump.fun
 are mostly creators and the fastest bots; copying them is the losing side of their trade.
+
+## Round 1c: what coin creators make (meme/creators.py, same day)
+33,072 coins, 2.67% completed the curve. Creator's own wallet only (bundled side wallets invisible), first hour,
+0.02 SOL creation cost, creator fee share assumed 0.3% of curve volume (estimate):
+- realized + fees: median -0.006 SOL per coin, mean -0.36 SOL, 47% in profit; 90th pct +0.91, 99th pct +6.4 SOL.
+- creators who never sold (25%): median fee income 0.011 SOL (about EUR 1.50).
+- creators who put in 1+ SOL: 71% in profit but mean -1.83 SOL (a few big losses).
+So an honest launch earns about nothing; the profitable creator pattern is buy-early-sell-to-followers
+(pump-and-dump / rug), which is not something we will do.
+
+## Round 2: funding-rate carry (carry/funding.py, Binance funding history 2020 -> Oct 2026)
+Long spot + short perp, 0.30% round-trip cost. Train 2020-2023, holdout 2024+. %/yr on position size
+(on capital ~ divide by 1.5):
+
+| | train %/yr | holdout %/yr | holdout on capital | worst holdout month |
+|---|---|---|---|---|
+| BTC always on | 14.9 | 6.9 | 4.6 | -0.18% |
+| ETH always on | 18.5 | 6.9 | 4.6 | -0.31% |
+| best rule (rotate to highest funding, N21, in > 0.005%/8h) | 20.8 | 6.5 | 4.3 | -0.20% |
+
+Funding by year (BTC): 2021 30.6%, 2022 4.2%, 2023 7.9%, 2024 11.9%, 2025 5.1%, 2026 3.1%.
+Last 12 months: BTC 3.5%, ETH 2.5%, SOL -0.3% if always collected, i.e. ~2% on capital: savings-account level,
+with exchange risk on top. Smart rules add nothing over "always on". Not worth doing now; only interesting when
+funding is high again (bull markets, like 2021 / 2024).
