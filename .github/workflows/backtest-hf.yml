@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       script:
-        description: "backtest (all families) or copytest (copy trading in depth)"
+        description: "backtest (all families), copytest (copy trading) or creators (what coin creators make)"
         default: "backtest"
 permissions:
   contents: read
