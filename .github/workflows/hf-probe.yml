@@ -21,7 +21,7 @@ jobs:
           import os, requests, pyarrow.parquet as pq, io
           ds = os.environ["DS"]
           card = requests.get(f"https://huggingface.co/datasets/{ds}/raw/main/README.md", timeout=30).text
-          print("=== CARD ===\n", card[:6000])
+          print("=== CARD ===\n", card[5500:])
           info = requests.get(f"https://huggingface.co/api/datasets/{ds}/tree/main?recursive=true", timeout=30).json()
           files = [f for f in info if f.get("type") == "file"]
           print("=== FILES ===", len(files))
@@ -29,14 +29,14 @@ jobs:
               print(f["path"], f.get("size"))
           pqs = [f for f in files if f["path"].endswith(".parquet")]
           if pqs:
-              small = min(pqs, key=lambda f: f.get("size") or 1e18)
+              small = [f for f in pqs if f["path"].startswith("data/")][-1]
               b = requests.get(f"https://huggingface.co/datasets/{ds}/resolve/main/{small['path']}", timeout=300).content
               t = pq.read_table(io.BytesIO(b))
               print("=== SCHEMA of", small["path"], t.num_rows, "rows ===\n", t.schema)
               df = t.to_pandas()
               import pandas as pd
               pd.set_option("display.width", 250); pd.set_option("display.max_columns", 50)
-              print(df.head(8).to_string())
+              print(df.head(8).to_string()); print(df[df.venue=="curve"].head(8).to_string()); print(df.dtypes)
               for c in df.columns:
                   if "time" in c.lower() or "slot" in c.lower() or "block" in c.lower():
                       print(c, "min", df[c].min(), "max", df[c].max())
