@@ -35,6 +35,19 @@ Shared safety checks (the "Rina" step) for all strategies:
 ## D. Baseline (to compare against)
 - Buy every launch at second 5, sell after 10 minutes. Shows what "random" earns after costs (expected: badly negative).
 
+## E. Copy trading ("smart wallets")
+- Rank wallets by realized curve profit on the training coins (5+ coins, positive); follow the top 20 / 50 / 200.
+- Buy when a followed wallet buys a coin younger than 1 / 5 / 30 min; same exits as above.
+- Tests whether "smart money" is skill (holds up on later coins) or luck.
+
+## F. Fast flip
+- Buy at launch + 0-5 s, sell 5-60 s later (the "first buyers" trade). Prior research: -2 to -7% per trade.
+
+## What others found (github.com/apchhui/pump-research, 26k coins, same kind of test)
+Every family lost on the holdout: early entry with filters -20%, curve progress -4 to -15%, buying before migration
+-12 to -33%, fast flip -2 to -7%, buying right after migration -4 to -8%. Their one "winner" was a data bug.
+Copy trading was not in their test; we add it.
+
 ## Expected
 Most memecoins die within minutes, so most trades of any strategy lose; a strategy only works if the few runners pay
 for all the losers after costs. Judge by total SOL / EUR profit on the holdout weeks, not win rate.
