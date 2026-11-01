@@ -1,0 +1,42 @@
+name: hf probe
+# Looks at a Hugging Face dataset: card, file list, schema + a few rows of the first parquet file.
+on:
+  workflow_dispatch:
+    inputs:
+      dataset:
+        default: "pumpdatafun/pump-fun-trades-sample"
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install --quiet pyarrow pandas requests
+      - shell: python
+        env:
+          DS: ${{ inputs.dataset }}
+        run: |
+          import os, requests, pyarrow.parquet as pq, io
+          ds = os.environ["DS"]
+          card = requests.get(f"https://huggingface.co/datasets/{ds}/raw/main/README.md", timeout=30).text
+          print("=== CARD ===\n", card[:6000])
+          info = requests.get(f"https://huggingface.co/api/datasets/{ds}/tree/main?recursive=true", timeout=30).json()
+          files = [f for f in info if f.get("type") == "file"]
+          print("=== FILES ===", len(files))
+          for f in files[:60]:
+              print(f["path"], f.get("size"))
+          pqs = [f for f in files if f["path"].endswith(".parquet")]
+          if pqs:
+              small = min(pqs, key=lambda f: f.get("size") or 1e18)
+              b = requests.get(f"https://huggingface.co/datasets/{ds}/resolve/main/{small['path']}", timeout=300).content
+              t = pq.read_table(io.BytesIO(b))
+              print("=== SCHEMA of", small["path"], t.num_rows, "rows ===\n", t.schema)
+              df = t.to_pandas()
+              import pandas as pd
+              pd.set_option("display.width", 250); pd.set_option("display.max_columns", 50)
+              print(df.head(8).to_string())
+              for c in df.columns:
+                  if "time" in c.lower() or "slot" in c.lower() or "block" in c.lower():
+                      print(c, "min", df[c].min(), "max", df[c].max())
