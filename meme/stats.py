@@ -18,8 +18,11 @@ def main(folder):
     if T:
         raw = sum(len(t) for t in T)
         tr = pd.concat(T).drop_duplicates(["slot", "sig", "mint", "user", "sol", "tokens"])
-        h = max((tr.ts.max() - tr.ts.min()) / 3600, 1e-9)
+        h = max((tr.recv_ms.max() - tr.recv_ms.min()) / 3.6e6, 1e-9)   # receive clock (always set)
         print(f"trades {len(tr):,} unique of {raw:,} rows ({len(tr) / h / 60:,.0f}/min), coins traded {tr.mint.nunique():,}")
+        lag = tr.recv_ms / 1000 - pd.to_numeric(tr.ts, errors="coerce")
+        print(f"on-chain time check: {lag.between(-5, 120).mean():.0%} of trades have ts within -5..120 s of receipt "
+              f"(median lag {lag.median():.1f} s; far off = decoding offset wrong)")
         if L:
             new = tr[tr.mint.isin(cr.mint)]
             per = new.groupby("mint").size().reindex(cr.mint, fill_value=0)
