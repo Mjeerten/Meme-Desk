@@ -72,16 +72,21 @@ jobs:
                    (i.get("description") or i.get("title") or "").strip()]
           open(sys.argv[2], "w").write("\n".join(lines) + "\n")
           PY
-            python - "/tmp/dl/$vid" "$out/transcript.txt" <<'PY'
-          import sys
+            python - "/tmp/dl/$vid" "$out/transcript.txt" <<'PY' || true
+          import subprocess, sys
+          import numpy as np
           from faster_whisper import WhisperModel
+          raw = subprocess.run(["ffmpeg", "-loglevel", "error", "-i", sys.argv[1], "-ac", "1", "-ar", "16000",
+                                "-f", "s16le", "-"], capture_output=True, check=True).stdout
+          audio = np.frombuffer(raw, np.int16).astype(np.float32) / 32768.0
           m = WhisperModel("small", device="cpu", compute_type="int8")
-          segs, info = m.transcribe(sys.argv[1], vad_filter=True)
+          segs, info = m.transcribe(audio, vad_filter=True)
           with open(sys.argv[2], "w") as f:
               f.write(f"language: {info.language} ({info.language_probability:.0%})\n")
               for s in segs:
                   f.write(f"[{s.start:6.1f}-{s.end:6.1f}] {s.text.strip()}\n")
           PY
+            [ -s "$out/transcript.txt" ] || echo "(no transcript)" > "$out/transcript.txt"
             cat "$out/info.txt" "$out/transcript.txt"
             echo "frames: $(ls $out/frames | wc -l)"
             echo "::endgroup::"
