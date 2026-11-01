@@ -6,6 +6,10 @@ name: record pump.fun
 # Data: one artifact per run ("pumpfun-<start time>"), kept 90 days. Public repo = Actions minutes are free.
 on:
   workflow_dispatch:
+    inputs:
+      minutes:
+        description: "minutes to record (under 300 = test run, does not chain)"
+        default: "340"
   schedule:
     - cron: "17 */6 * * *"
 
@@ -19,6 +23,8 @@ permissions:
 concurrency:
   group: record
   cancel-in-progress: false
+
+  MINUTES: ${{ inputs.minutes || '340' }}
 
 jobs:
   record:
@@ -35,11 +41,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if [[ "$(date -u +%F)" < "$RECORD_UNTIL" ]]; then gh workflow run record.yml --ref "$GITHUB_REF_NAME"; echo "next run queued"; else echo "past RECORD_UNTIL, not chaining"; fi
+          if (( MINUTES < 300 )); then echo "test run, not chaining"; elif [[ "$(date -u +%F)" < "$RECORD_UNTIL" ]]; then gh workflow run record.yml --ref "$GITHUB_REF_NAME"; echo "next run queued"; else echo "past RECORD_UNTIL, not chaining"; fi
       - name: record
         run: |
           if [[ "$(date -u +%F)" > "$RECORD_UNTIL" ]]; then echo "past RECORD_UNTIL"; exit 0; fi
-          python -m meme.record --minutes 340
+          python -m meme.record --minutes "$MINUTES"
       - run: python -m meme.stats data/*.csv.gz || true
       - uses: actions/upload-artifact@v4
         with:
