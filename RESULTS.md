@@ -63,3 +63,12 @@ Funding by year (BTC): 2021 30.6%, 2022 4.2%, 2023 7.9%, 2024 11.9%, 2025 5.1%, 
 Last 12 months: BTC 3.5%, ETH 2.5%, SOL -0.3% if always collected, i.e. ~2% on capital: savings-account level,
 with exchange risk on top. Smart rules add nothing over "always on". Not worth doing now; only interesting when
 funding is high again (bull markets, like 2021 / 2024).
+
+## Videos (1 Nov 2026, via video.yml)
+- runitbankexe "Grok Bot night shift" (28 Oct): $1,500 -> $7,858 overnight, 47 trades / 41 wins. Staged: the BNB/BTC/ETH
+  lock-screen prices (755.29 / 81,527.60 / 2,372.69) and the 96% battery never change from 00:06 to 06:04. Ad.
+- runitbankexe "FOMO x GROK" (23 Sep): the screen shows +44% for the shift ($11,451 -> $16,508); "16.49x in five days" is
+  only in the caption. The log is Polymarket/Kalshi bets (Musk tweet counts, esports, football, Kalshi-vs-Polymarket gaps)
+  plus the $CATE token, not pump.fun. Same "subscription covered by P&L" upsell. No wallet shown.
+- el3mentss: ICT 4-step prop-firm setup (daily sweep of PDH/PDL -> 4h FVG -> 1h swing -> CISD entry, 2R). Close to the
+  day desk's rounds 10/13 (IFVG, HTF + zones + BOS: no edge); this exact chain not tested yet.
