@@ -20,3 +20,22 @@ The only family positive on train is "dip after the first pump", and it fails th
 one variant +1.4 SOL on 47 trades with a range that includes big losses: luck, not proof).
 Next: the same test on our own recordings (from 2026-11-01) as a second, independent check, with "dip" as the one
 candidate to watch. If it fails there too, stop.
+
+## Round 1b: copy trading in depth (meme/copytest.py, same day, run on backtest-hf.yml script=copytest)
+**Winners do keep winning:** the top 10 wallets on the training coins (10+ coins) made +6,246 SOL on the later
+coins, all 10 in profit; top 50: +7,407 SOL, 88% in profit (rank correlation train -> holdout 0.26-0.35).
+**But they can't be copied:** 56% of the top 50 are the coins' own creators, median hold 4 seconds, 70% hold under 30 s
+(creators, bundlers, same-block snipers). Their edge is being first / being the insider; a copier buys after them,
+into their selling.
+
+Copy simulation on the holdout (0.2 SOL, fees, curve fills, sell when the wallet sells or after 30 min):
+
+| wallets followed | delay 0 s | 1 s | 2 s | 5 s |
+|---|---|---|---|---|
+| top 50 by profit (7,072 trades) | -6.1% | -5.1% | -4.8% | -6.9% per trade (-68 to -97 SOL) |
+| copyable top 50 (10+ coins, win >= 50%, hold >= 30 s, not creator; 445 trades) | -4.9% | -5.4% | -6.1% | -9.0% |
+| copyable top 200 (848 trades) | -4.8% | -4.8% | -4.9% | -7.3% |
+| most consistent (20+ coins, win >= 60%, hold >= 60 s; 440 trades) | -6.3% | -7.0% | -7.9% | -7.8% |
+
+Even with zero delay every copy variant loses ~5-8% per trade. Conclusion: the people who make money on pump.fun
+are mostly creators and the fastest bots; copying them is the losing side of their trade.
