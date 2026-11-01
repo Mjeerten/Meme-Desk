@@ -1,58 +1,79 @@
 name: record pump.fun
 
-# Records every pump.fun launch + its first hour of trades (meme/record.py) in back-to-back ~6 h runs.
-# Each run queues the next one once its tests pass, so the next run begins the moment this one ends.
-# The 6-hourly schedule is only a backup in case the chain breaks. Stops chaining after RECORD_UNTIL.
-# Data: one artifact per run ("pumpfun-<start time>"), kept 90 days. Public repo = Actions minutes are free.
+# Records every pump.fun launch (PumpPortal free feed) + its first hour of trades (pump.fun trade API, free),
+# meme/record.py. 4 shards in parallel (different runners/IPs) to stay inside pump.fun's rate limit.
+# Each run listens MINUTES, then keeps fetching for WATCH+2 min; the chain job starts the next run the moment
+# listening ends, so launches are covered without gaps. A 6-hourly watchdog restarts the chain if it broke.
+# Stops chaining after RECORD_UNTIL. Data: artifact "pumpfun-<run id>" per run, kept 90 days.
 on:
   workflow_dispatch:
     inputs:
       minutes:
-        description: "minutes to record (under 300 = test run, does not chain)"
-        default: "340"
+        description: "minutes to listen (under 60 = test run, does not chain)"
+        default: "280"
+      watch:
+        description: "minutes after launch to fetch a coin's trades"
+        default: "60"
   schedule:
-    - cron: "17 */6 * * *"
+    - cron: "41 */6 * * *"
 
 env:
   RECORD_UNTIL: "2026-11-30"   # last day to record (UTC); change it to record longer
-  MINUTES: ${{ inputs.minutes || '340' }}
+  MINUTES: ${{ inputs.minutes || '280' }}
+  WATCH: ${{ inputs.watch || '60' }}
 
 permissions:
   contents: read
   actions: write
 
-concurrency:
-  group: record
-  cancel-in-progress: false
-
-
 jobs:
+  watchdog:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          busy=$(gh run list -R "$GITHUB_REPOSITORY" -w record.yml -e workflow_dispatch -s in_progress --json databaseId -q length)
+          queued=$(gh run list -R "$GITHUB_REPOSITORY" -w record.yml -e workflow_dispatch -s queued --json databaseId -q length)
+          if [[ "$busy$queued" == "00" && "$(date -u +%F)" < "$RECORD_UNTIL" ]]; then gh workflow run record.yml -R "$GITHUB_REPOSITORY"; echo "chain restarted"; else echo "busy=$busy queued=$queued, nothing to do"; fi
+
   record:
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 355
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-      - run: pip install --quiet websockets pandas pytest
+      - run: pip install --quiet -r requirements.txt
       - run: python -m pytest -q
-      - name: queue the next run
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          if (( MINUTES < 300 )); then echo "test run, not chaining"; elif [[ "$(date -u +%F)" < "$RECORD_UNTIL" ]]; then gh workflow run record.yml --ref "$GITHUB_REF_NAME"; echo "next run queued"; else echo "past RECORD_UNTIL, not chaining"; fi
       - name: record
-        env:
-          PUMPPORTAL_API_KEY: ${{ secrets.PUMPPORTAL_API_KEY }}
         run: |
           if [[ "$(date -u +%F)" > "$RECORD_UNTIL" ]]; then echo "past RECORD_UNTIL"; exit 0; fi
-          python -m meme.record --minutes "$MINUTES"
+          python -m meme.record --minutes "$MINUTES" --watch "$WATCH" --shard ${{ matrix.shard }} --shards 4
       - run: python -m meme.stats data/*.csv.gz || true
       - uses: actions/upload-artifact@v4
         with:
-          name: pumpfun-${{ github.run_id }}
+          name: pumpfun-${{ github.run_id }}-s${{ matrix.shard }}
           path: data/
           retention-days: 90
-          compression-level: 0   # files are already gzipped
+          compression-level: 0
           if-no-files-found: ignore
+
+  chain:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if (( MINUTES < 60 )); then echo "test run, not chaining"; exit 0; fi
+          sleep $(( MINUTES * 60 - 120 ))
+          if [[ "$(date -u +%F)" < "$RECORD_UNTIL" ]]; then gh workflow run record.yml -R "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME"; echo "next run started"; else echo "past RECORD_UNTIL"; fi
