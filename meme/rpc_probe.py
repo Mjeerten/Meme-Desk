@@ -40,34 +40,44 @@ def decode_trade(data: bytes):
 
 async def main(url, seconds):
     import websockets
-    n_msg = n_trade = n_err = 0
+    n_msg = n_trade = n_err = drops = 0
+    down = 0.0
     discs = {}
     t0 = time.time()
-    async with websockets.connect(url, ping_interval=20, max_size=2**23) as ws:
-        await ws.send(json.dumps({"jsonrpc": "2.0", "id": 1, "method": "logsSubscribe",
-                                  "params": [{"mentions": [PUMP]}, {"commitment": "confirmed"}]}))
-        print("subscribe reply:", (await ws.recv())[:300], flush=True)
-        while time.time() - t0 < seconds:
-            m = json.loads(await asyncio.wait_for(ws.recv(), 60))
-            n_msg += 1
-            v = m.get("params", {}).get("result", {}).get("value", {})
-            if v.get("err"):
-                n_err += 1
-                continue
-            for line in v.get("logs", []):
-                if line.startswith("Program data: "):
-                    try:
-                        d = base64.b64decode(line[14:])
-                    except Exception:
+    while time.time() - t0 < seconds:
+        t_try = time.time()
+        try:
+            async with websockets.connect(url, ping_interval=20, max_size=2**23) as ws:
+                await ws.send(json.dumps({"jsonrpc": "2.0", "id": 1, "method": "logsSubscribe",
+                                          "params": [{"mentions": [PUMP]}, {"commitment": "confirmed"}]}))
+                await ws.recv()
+                down += time.time() - t_try
+                up_at = time.time()
+                while time.time() - t0 < seconds:
+                    m = json.loads(await asyncio.wait_for(ws.recv(), 60))
+                    n_msg += 1
+                    v = m.get("params", {}).get("result", {}).get("value", {})
+                    if v.get("err"):
+                        n_err += 1
                         continue
-                    discs[d[:8].hex()] = discs.get(d[:8].hex(), 0) + 1
-                    t = decode_trade(d)
-                    if t:
-                        n_trade += 1
-                        if n_trade <= 3:
-                            print("trade:", t, flush=True)
+                    for line in v.get("logs", []):
+                        if line.startswith("Program data: "):
+                            try:
+                                d = base64.b64decode(line[14:])
+                            except Exception:
+                                continue
+                            discs[d[:8].hex()] = discs.get(d[:8].hex(), 0) + 1
+                            if decode_trade(d):
+                                n_trade += 1
+        except Exception as e:
+            drops += 1
+            print(f"{time.time() - t0:5.0f}s drop {drops} after {time.time() - t_try:.0f}s up: {e!r}"[:200], flush=True)
+            t_d = time.time()
+            await asyncio.sleep(1 if drops < 20 else 5)
+            down += time.time() - t_d
     dt = time.time() - t0
-    print(f"{dt:.0f}s: {n_msg} tx notifications ({n_err} failed tx), {n_trade} trades = {n_trade / dt * 60:.0f}/min")
+    print(f"{dt:.0f}s: {n_msg} tx ({n_err} failed), {n_trade} trades = {n_trade / dt * 60:.0f}/min, "
+          f"{drops} drops, down {down:.0f}s = {down / dt:.0%}")
     print("Program data discriminators:", sorted(discs.items(), key=lambda x: -x[1])[:8])
 
 
