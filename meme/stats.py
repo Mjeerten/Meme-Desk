@@ -6,8 +6,8 @@ import pandas as pd
 
 
 def main(folder):
-    L = [pd.read_csv(p, low_memory=False) for p in sorted(glob.glob(f"{folder}/*-launches.csv.gz"))]
-    T = [pd.read_csv(p, low_memory=False) for p in sorted(glob.glob(f"{folder}/*-trades.csv.gz"))]
+    L = [pd.read_csv(p, low_memory=False) for p in sorted(glob.glob(f"{folder}/**/*-launches.csv.gz", recursive=True))]
+    T = [pd.read_csv(p, low_memory=False) for p in sorted(glob.glob(f"{folder}/**/*-trades.csv.gz", recursive=True))]
     if L:
         la = pd.concat(L).drop_duplicates(["type", "mint"])
         cr = la[la.type == "create"]

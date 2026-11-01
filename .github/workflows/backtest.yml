@@ -1,0 +1,43 @@
+name: backtest
+
+# Downloads every recording (artifacts of record.yml runs) and runs meme/backtest.py: all strategy families,
+# grid search on the first 60% of coins, the best rules checked once on the last 40%. Read the result in the log;
+# the tables are also uploaded as artifact "backtest-<run id>".
+on:
+  workflow_dispatch:
+    inputs:
+      max_runs:
+        description: "how many recent recording runs to use"
+        default: "200"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install --quiet -r requirements.txt
+      - name: download recordings
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p data
+          for id in $(gh run list -R "$GITHUB_REPOSITORY" -w record.yml -e workflow_dispatch -s completed -L "${{ inputs.max_runs }}" --json databaseId -q '.[].databaseId'); do
+            gh run download "$id" -R "$GITHUB_REPOSITORY" -D "data/$id" -p "pumpfun-*" 2>/dev/null || true
+          done
+          du -sh data; find data -name "*.csv.gz" | wc -l
+      - run: python -m meme.stats data || true
+      - run: python -m meme.backtest data
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backtest-${{ github.run_id }}
+          path: results/
+          if-no-files-found: ignore
