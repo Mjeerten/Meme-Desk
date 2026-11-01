@@ -1,0 +1,33 @@
+name: backtest hf day
+# Backtest on the free pumpdata.fun Hugging Face sample (one full day, 2026-10-15): download, convert
+# (meme/hf_data.py), run meme/backtest.py. Results in the log and artifact "backtest-hf-<run id>".
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install --quiet -r requirements.txt
+      - name: download
+        run: |
+          base=https://huggingface.co/datasets/pumpdatafun/pump-fun-trades-sample/resolve/main
+          mkdir -p hf/data hf/events
+          curl -sSfL -o hf/events/events.parquet $base/events/pumpdata-2026-10-15-events.parquet
+          for i in 0 1 2; do curl -sSfL -o hf/data/t$i.parquet $base/data/pumpdata-2026-10-15-0000$i-of-00003.parquet; done
+          du -sh hf
+      - run: python -m meme.hf_data hf hfdata && rm -rf hf
+      - run: python -m meme.stats hfdata || true
+      - run: python -m meme.backtest hfdata
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backtest-hf-${{ github.run_id }}
+          path: results/
+          if-no-files-found: ignore
