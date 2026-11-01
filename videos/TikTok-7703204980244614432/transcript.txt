@@ -1,0 +1,28 @@
+language: en (100%)
+[   0.0-   2.6] The four-step trading strategy that got me a 10k payout.
+[   2.6-   4.5] I'm going to explain it in less than 60 seconds.
+[   5.5-   7.4] Step one, daily bias.
+[   7.4-   9.4] Close beyond the previous day's high or low.
+[   9.4-  10.6] Continuation.
+[  10.6-  12.3] Sweep it and close back inside.
+[  12.3-  12.8] Reversal.
+[  13.8-  16.6] Price sweeps the previous day's low and closes back inside.
+[  16.6-  17.6] Daily reversal.
+[  17.6-  18.4] Looking for longs.
+[  19.6-  21.9] Step two, drop to the four-hour.
+[  21.9-  23.7] Wait for price to tap the fair value gap.
+[  24.6-  26.2] Four-hour profile confirmed.
+[  26.2-  28.0] We can frame longs from this FVG.
+[  29.0-  31.2] Step three, the one-hour or 30-minute.
+[  31.2-  32.7] Wait for a swing inside the gap.
+[  33.7-  35.7] Step four, the entry timeframe.
+[  35.7-  37.5] Bullish CISD.
+[  37.5-  38.3] Enter on the close.
+[  39.1-  40.2] Stop under the low.
+[  40.2-  42.6] Target to R or external liquidity.
+[  42.6-  43.4] Five micros.
+[  44.4-  45.5] 100 points later.
+[  45.5-  46.4] Target hit.
+[  46.4-  47.9] $1,000 before fees.
+[  49.0-  51.1] Daily four-hour one-hour entry.
+[  51.8-  57.8] Follow for more strategy breakdowns.
