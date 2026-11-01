@@ -61,8 +61,8 @@ class Recorder:
 
     def handle(self, msg: dict, now_ms: int) -> str | None:
         """Write the message; return a mint to subscribe to when it is a new launch."""
-        shape = (msg.get("txType"), tuple(sorted(msg)))
-        if shape not in self.shapes and len(self.shapes) < 20:
+        shape = (msg.get("txType"), tuple(sorted(msg)), str(msg.get("message", msg.get("errors", "")))[:60])
+        if shape not in self.shapes and len(self.shapes) < 40:
             self.shapes.add(shape)
             print("sample:", json.dumps(msg)[:600], flush=True)
         row = to_row(msg, now_ms)
