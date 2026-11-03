@@ -84,6 +84,20 @@ each from its listing, equal weight, Bitvavo cost 0.25% a side; 2019-23 vs 2024+
 trade -587% without a stop (squeeze), and with stops the result swings from -0.6% to +10% depending on the setting.
 Not robust, and Binance futures are not offered to Dutch retail clients anyway.
 
+## Round 4: coins after they graduate to PumpSwap (meme/graduates.py, round4.yml, 3 Nov 2026)
+1,116 coins that migrated while we recorded (late Oct - 3 Nov), GeckoTerminal 5-min candles, first 60% train, last 40% holdout.
+- What happens after migration: 24 h later the median coin is at x0.05 of its migration price; 7% are up, 64% lost 80%+.
+  Median peak x2.31 (most pop first, then die).
+- Buy rules (432 settings: delay 0/5/30/120 min, hold 1-72 h, stop, target, up/down filter; 1.5% cost a side):
+  2% positive on train, 1% on both. Plain buy at migration: train -24 to -50% per trade (median -28 to -79%);
+  holdout average +239% only because ONE coin went x1,154 (median -49 to -95%).
+  Best robust-looking: buy 5 min after migration, 30% stop, sell after 1 h: +9.7 / +8.3% per trade, but win rate 12-14%,
+  median -16 / -18%, and without its single best coin the holdout is -5% per trade. Lottery tickets, and a 30% stop
+  on these coins fills worse than the candle says. Even at 0.5% cost only 3% of settings are positive on both.
+- Liquidity providing in the new pool (fee 0.2% / 0.05%): loses everywhere (-2 to -46% per coin); the price collapse
+  swamps the fees. Waiting 2 h loses least (-2 to -12%).
+- Verdict: no edge buying graduates or providing liquidity on them. Not continued.
+
 ## Videos (1 Nov 2026, via video.yml)
 - runitbankexe "Grok Bot night shift" (28 Oct): $1,500 -> $7,858 overnight, 47 trades / 41 wins. Staged: the BNB/BTC/ETH
   lock-screen prices (755.29 / 81,527.60 / 2,372.69) and the 96% battery never change from 00:06 to 06:04. Ad.
