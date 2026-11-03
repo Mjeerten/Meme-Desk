@@ -18,6 +18,7 @@ python -m meme.graduates data --max 1500 --out results
 from __future__ import annotations
 
 import argparse
+import pickle
 import glob
 import itertools
 import os
@@ -120,30 +121,42 @@ def summary(r):
                 best=round(r.max() * 100, 0), worst=round(r.min() * 100, 0))
 
 
-def main(folder, mx, out):
+def fetch(folder, mx, out, shard=0, of=1):
+    """Download candles for this shard's coins; saved every 25 coins so a cancelled job keeps what it got."""
     os.makedirs(out, exist_ok=True)
     mg = migrations(folder)
     now = time.time()
-    mg = mg[mg.t_ms / 1000 < now - 3 * 3600].sort_values("t_ms").tail(mx)
-    data, miss = {}, 0
+    mg = mg[mg.t_ms / 1000 < now - 3 * 3600].sort_values("t_ms").tail(mx).iloc[shard::of]
+    print(f"shard {shard}/{of}: {len(mg)} coins", flush=True)
+    data, miss, path = {}, 0, f"{out}/candles-{shard}.pkl"
     for n, (mint, row) in enumerate(mg.iterrows()):
         try:
             d = candles(mint)
         except Exception as e:
             print("error", mint, repr(e)[:120], flush=True)
             d = None
-        if d is None:
+        if d is not None:
+            d = d[d.ts >= row.t_ms / 1000 - 300]
+        if d is None or not len(d):
             miss += 1
         else:
-            d = d[d.ts >= row.t_ms / 1000 - 300]
-            if len(d):
-                data[mint] = {k: d[k].to_numpy(float) for k in d}
-            else:
-                miss += 1
+            data[mint] = dict(t_ms=float(row.t_ms), **{k: d[k].to_numpy(float) for k in d})
+        if n % 25 == 24 or n == len(mg) - 1:
+            with open(path, "wb") as f:
+                pickle.dump(data, f)
         if n % 100 == 99:
             print(f"{n + 1} coins fetched, {miss} without data", flush=True)
-    mg = mg.loc[list(data)]
-    print(f"{len(data)} graduated coins with candles, {miss} without", flush=True)
+    print(f"shard {shard}: {len(data)} coins with candles, {miss} without", flush=True)
+
+
+def main(cache, out):
+    os.makedirs(out, exist_ok=True)
+    data = {}
+    for p in glob.glob(os.path.join(cache, "**", "candles-*.pkl"), recursive=True):
+        with open(p, "rb") as f:
+            data.update(pickle.load(f))
+    mg = pd.DataFrame({"t_ms": {m: d.pop("t_ms") for m, d in data.items()}})
+    print(f"{len(data)} graduated coins with candles", flush=True)
     life = pd.DataFrame({m: dict(x24=d["c"][d["ts"] <= mg.t_ms[m] / 1000 + 86400][-1] / d["c"][0],
                                  peak=d["h"].max() / d["c"][0]) for m, d in data.items()}).T
     print("price 24 h after migration vs at migration: median x{:.2f}, share up {:.0%}, share below 0.2x {:.0%}; "
@@ -183,8 +196,14 @@ def main(folder, mx, out):
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("folder")
+    ap.add_argument("folder", help="recordings (fetch) or downloaded candle files (analyse)")
+    ap.add_argument("--fetch", action="store_true")
     ap.add_argument("--max", type=int, default=1500)
+    ap.add_argument("--shard", type=int, default=0)
+    ap.add_argument("--of", type=int, default=1)
     ap.add_argument("--out", default="results")
     a = ap.parse_args()
-    main(a.folder, a.max, a.out)
+    if a.fetch:
+        fetch(a.folder, a.max, a.out, a.shard, a.of)
+    else:
+        main(a.folder, a.out)

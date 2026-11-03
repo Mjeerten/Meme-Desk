@@ -1,18 +1,23 @@
 name: round 4 graduated coins
 # meme/graduates.py: every recorded migration -> GeckoTerminal 5-min candles -> buy rules + liquidity providing.
+# GeckoTerminal rate-limits per IP, so candles are fetched by parallel shards (each runner has its own IP).
 on:
   workflow_dispatch:
     inputs:
       max_coins:
-        description: "most recent migrations to fetch (GeckoTerminal ~10 coins/min)"
+        description: "most recent migrations to fetch"
         default: "1500"
 permissions:
   contents: read
   actions: read
 jobs:
-  run:
+  fetch:
     runs-on: ubuntu-latest
-    timeout-minutes: 350
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
@@ -29,7 +34,28 @@ jobs:
           done
           find data -name "*-trades.csv.gz" -delete
           find data -name "*.csv.gz" | wc -l
-      - run: python -m meme.graduates data --max "${{ inputs.max_coins }}" --out results
+      - run: timeout 280m python -m meme.graduates data --fetch --max "${{ inputs.max_coins }}" --shard ${{ matrix.shard }} --of 8 --out cache || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: round4-candles-${{ matrix.shard }}
+          path: cache/
+          if-no-files-found: ignore
+  analyse:
+    needs: fetch
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install --quiet pandas numpy requests
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: round4-candles-*
+          path: cache
+      - run: python -m meme.graduates cache --out results
       - uses: actions/upload-artifact@v4
         if: always()
         with:
