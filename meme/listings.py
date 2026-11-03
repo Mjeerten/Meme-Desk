@@ -54,7 +54,7 @@ def trade(k, e, side, hold, stop):
         return None
     o, h, l, c, fu = (k[x].to_numpy() for x in ("open", "high", "low", "close", "fund"))
     px = c[e]
-    sp = px * (1 + stop) if side < 0 else px * (1 - stop) if stop else None
+    sp = (px * (1 + stop) if side < 0 else px * (1 - stop)) if stop else None
     fund, end, x = 0.0, min(e + hold, len(k) - 1), None
     for j in range(e + 1, end + 1):
         fund += -side * fu[j]                        # long pays positive funding, short receives it

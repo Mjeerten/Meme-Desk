@@ -148,13 +148,18 @@ def main(out):
         for bf in (False, True):
             rows.append(dict(kind=kind, a=a, b=b, flag=flag, btc=bf, **stats(equity(px, w, bf))))
     g = pd.DataFrame(rows)
+    solo = pd.DataFrame({"XBT": px.BTC, "BTC": px.BTC})            # the same trend rules on BTC alone
+    for kind, a, b in (("sma", 20, None), ("donch", 20, 10), ("donch", 10, 5)):
+        for bf in (False, True):
+            g = pd.concat([g, pd.DataFrame([dict(kind=f"BTC-only {kind}", a=a, b=b, btc=bf,
+                                                 **stats(equity(solo, positions(solo, kind, a, b), bf)))])])
     for ref in ("BTC", "DOGE"):
         r = px[ref].pct_change(fill_method=None).fillna(0.0)
         g = pd.concat([g, pd.DataFrame([dict(kind=f"{ref} hold", **stats(r))])])
     g.to_csv(f"{out}/round3a_bigcoins.csv", index=False)
     with pd.option_context("display.width", 250, "display.max_columns", 30, "display.max_colwidth", 90):
         print(f"\n{len(g)} settings; dev>0 {(g.dev_yr > 0).mean():.0%}, both>0 {((g.dev_yr > 0) & (g.hold_yr > 0)).mean():.0%}")
-        print("REFERENCES + PLAIN HOLD:\n" + g[g.kind.str.contains("hold")].to_string(index=False))
+        print("REFERENCES + PLAIN HOLD:\n" + g[g.kind.str.contains("hold|BTC")].to_string(index=False))
         print("BY KIND (median):\n" + g.groupby(["kind", "btc"])[["dev_yr", "hold_yr", "dev_sh", "hold_sh", "dev_dd", "hold_dd"]]
               .median().to_string())
         print("TOP 12 BY 2019-23 SHARPE:\n" + g.sort_values("dev_sh", ascending=False).head(12).to_string(index=False))
