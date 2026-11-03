@@ -9,8 +9,9 @@
   funded key.)
 
 Output, per run: data/YYYYMMDD-HHMM-<copy>-launches.csv.gz and -trades.csv.gz
-  launches: t_ms,type,mint,creator,sol,tokens,mcap_sol,pool,mayhem,symbol,name   (type = create | migrate)
-  trades:   recv_ms,slot,sig,ts,mint,user,buy,sol,tokens,vsol,vtok
+  launches: t_ms,type,mint,creator,sol,tokens,mcap_sol,pool,mayhem,symbol,name,uri   (type = create | migrate)
+  trades:   recv_ms,slot,sig,ts,mint,user,buy,sol,tokens,vsol,vtok,fee_bps,cfee_bps
+            (uri = coin metadata JSON with its X / Telegram / website links; fee_bps / cfee_bps = protocol and creator fee)
             (ts = on-chain unix seconds; sol/tokens of the trade; vsol/vtok = virtual curve reserves after it,
              so price = vsol / vtok SOL per token)
 
@@ -34,8 +35,8 @@ RPC_URL = "wss://api.mainnet-beta.solana.com"
 PUMP = "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P"
 TRADE_DISC = bytes.fromhex("bddb7fd34ee661ee")
 B58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
-LAUNCH_FIELDS = ["t_ms", "type", "mint", "creator", "sol", "tokens", "mcap_sol", "pool", "mayhem", "symbol", "name"]
-TRADE_FIELDS = ["recv_ms", "slot", "sig", "ts", "mint", "user", "buy", "sol", "tokens", "vsol", "vtok"]
+LAUNCH_FIELDS = ["t_ms", "type", "mint", "creator", "sol", "tokens", "mcap_sol", "pool", "mayhem", "symbol", "name", "uri"]
+TRADE_FIELDS = ["recv_ms", "slot", "sig", "ts", "mint", "user", "buy", "sol", "tokens", "vsol", "vtok", "fee_bps", "cfee_bps"]
 
 
 def b58(b: bytes) -> str:
@@ -56,8 +57,13 @@ def decode_trade(data: bytes) -> dict | None:
     is_buy = data[56]
     user = b58(data[57:89])
     ts, vsol, vtok = struct.unpack_from("<qQQ", data, 89)
+    fee_bps = cfee_bps = ""
+    if len(data) >= 217:                       # ... real_sol real_tok fee_recipient(32) fee_bps fee creator(32) creator_fee_bps
+        f, c = struct.unpack_from("<Q", data, 153)[0], struct.unpack_from("<Q", data, 201)[0]
+        if f < 10000 and c < 10000:
+            fee_bps, cfee_bps = f, c
     return {"mint": mint, "sol": sol / 1e9, "tokens": tok / 1e6, "buy": int(bool(is_buy)), "user": user, "ts": ts,
-            "vsol": vsol / 1e9, "vtok": vtok / 1e6}
+            "vsol": vsol / 1e9, "vtok": vtok / 1e6, "fee_bps": fee_bps, "cfee_bps": cfee_bps}
 
 
 def trades_from_logs(logs: list[str]) -> list[dict]:
@@ -78,7 +84,7 @@ def launch_row(msg: dict, now_ms: int) -> list | None:
     if kind is None and msg.get("mint") and "message" not in msg:
         kind = "migrate"
     if kind == "migrate":
-        return [now_ms, "migrate", msg.get("mint", ""), "", "", "", "", msg.get("pool", ""), "", "", ""]
+        return [now_ms, "migrate", msg.get("mint", ""), "", "", "", "", msg.get("pool", ""), "", "", "", ""]
     if kind != "create":
         return None
 
@@ -87,7 +93,8 @@ def launch_row(msg: dict, now_ms: int) -> list | None:
 
     return [now_ms, "create", msg.get("mint", ""), msg.get("traderPublicKey", ""), msg.get("solAmount", ""),
             msg.get("initialBuy", ""), msg.get("marketCapSol", ""), msg.get("pool", ""),
-            int(bool(msg.get("is_mayhem_mode"))), clean(msg.get("symbol"), 20), clean(msg.get("name"), 40)]
+            int(bool(msg.get("is_mayhem_mode"))), clean(msg.get("symbol"), 20), clean(msg.get("name"), 40),
+            clean(msg.get("uri"), 200)]
 
 
 class Sink:
@@ -158,7 +165,8 @@ async def listen_trades(sink: Sink, end: float, url: str, stats: dict):
                     sig = str(v.get("signature", ""))[:16]
                     for t in trades_from_logs(v.get("logs", [])):
                         sink.write([now_ms, slot, sig, t["ts"], t["mint"], t["user"], t["buy"], f"{t['sol']:.9g}",
-                                    f"{t['tokens']:.9g}", f"{t['vsol']:.9g}", f"{t['vtok']:.9g}"])
+                                    f"{t['tokens']:.9g}", f"{t['vsol']:.9g}", f"{t['vtok']:.9g}",
+                                    t["fee_bps"], t["cfee_bps"]])
         except Exception as e:
             stats["drops"] += 1
             if stats["drops"] <= 5 or stats["drops"] % 200 == 0:

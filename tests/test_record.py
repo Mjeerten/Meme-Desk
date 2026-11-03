@@ -47,3 +47,10 @@ def test_sink_roundtrip(tmp_path):
     s.close()
     df = pd.read_csv(gzip.open(tmp_path / "t.csv.gz", "rt"))
     assert list(df.columns) == TRADE_FIELDS and df.mint[0] == "M"
+
+
+def test_decode_fees():
+    tail = struct.pack("<QQ", 1, 2) + bytes(32) + struct.pack("<QQ", 95, 123) + bytes(32) + struct.pack("<QQ", 30, 45)
+    t = decode_trade(event()[:105] + tail)
+    assert (t["fee_bps"], t["cfee_bps"]) == (95, 30)
+    assert decode_trade(event())["cfee_bps"] == ""          # short (old) event: no fee fields

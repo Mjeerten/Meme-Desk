@@ -53,8 +53,8 @@ def convert(src: str, out: str):
                                "sol": tr.sol_lamports / 1e9, "tokens": tr.token_amount / 1e6,
                                "vsol": tr.r1 / 1e9, "vtok": tr.r2 / 1e6})
     os.makedirs(out, exist_ok=True)
-    pd.concat([launches, mig])[LAUNCH_FIELDS].to_csv(os.path.join(out, "hf-20261015-x-launches.csv.gz"), index=False)
-    trades_out[TRADE_FIELDS].to_csv(os.path.join(out, "hf-20261015-x-trades.csv.gz"), index=False)
+    pd.concat([launches, mig]).reindex(columns=LAUNCH_FIELDS).to_csv(os.path.join(out, "hf-20261015-x-launches.csv.gz"), index=False)
+    trades_out.reindex(columns=TRADE_FIELDS).to_csv(os.path.join(out, "hf-20261015-x-trades.csv.gz"), index=False)
     print(f"{len(launches):,} coins, {len(mig):,} completions/migrations, {len(trades_out):,} curve trades on them")
 
 

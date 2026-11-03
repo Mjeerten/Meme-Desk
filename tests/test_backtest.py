@@ -41,7 +41,7 @@ def fake_recording(folder, n_coins=60, seed=1):
     os.makedirs(folder, exist_ok=True)
     for name, rows, cols in (("launches", L, LAUNCH_FIELDS), ("trades", T, TRADE_FIELDS)):
         with gzip.open(os.path.join(folder, f"x-a-{name}.csv.gz"), "wt") as f:
-            pd.DataFrame(rows, columns=cols).to_csv(f, index=False)
+            pd.DataFrame(rows, columns=cols[:len(rows[0])]).to_csv(f, index=False)
 
 
 def test_prepare_and_simulate(tmp_path):
