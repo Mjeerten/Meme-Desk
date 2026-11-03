@@ -7,11 +7,15 @@ on:
       max_coins:
         description: "most recent migrations to fetch"
         default: "1500"
+      candles_run:
+        description: "analyse the candles of this earlier run id (skips fetching)"
+        default: ""
 permissions:
   contents: read
   actions: read
 jobs:
   fetch:
+    if: inputs.candles_run == ''
     runs-on: ubuntu-latest
     timeout-minutes: 300
     strategy:
@@ -55,6 +59,8 @@ jobs:
         with:
           pattern: round4-candles-*
           path: cache
+          run-id: ${{ inputs.candles_run || github.run_id }}
+          github-token: ${{ github.token }}
       - run: python -m meme.graduates cache --out results
       - uses: actions/upload-artifact@v4
         if: always()

@@ -154,7 +154,13 @@ def main(cache, out):
     data = {}
     for p in glob.glob(os.path.join(cache, "**", "candles-*.pkl"), recursive=True):
         with open(p, "rb") as f:
-            data.update(pickle.load(f))
+            part = pickle.load(f)
+        print(f"{p}: {len(part)} coins", flush=True)
+        data.update(part)
+    late = [m for m, d in data.items() if d["ts"][0] > d["t_ms"] / 1000 + 3600]
+    for m in late:
+        del data[m]
+    print(f"dropped {len(late)} coins whose first candle is > 1 h after migration", flush=True)
     mg = pd.DataFrame({"t_ms": {m: d.pop("t_ms") for m, d in data.items()}})
     print(f"{len(data)} graduated coins with candles", flush=True)
     life = pd.DataFrame({m: dict(x24=d["c"][d["ts"] <= mg.t_ms[m] / 1000 + 86400][-1] / d["c"][0],
