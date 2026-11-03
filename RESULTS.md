@@ -64,6 +64,26 @@ Last 12 months: BTC 3.5%, ETH 2.5%, SOL -0.3% if always collected, i.e. ~2% on c
 with exchange risk on top. Smart rules add nothing over "always on". Not worth doing now; only interesting when
 funding is high again (bull markets, like 2021 / 2024).
 
+## Round 3: memecoins on an exchange (meme/bigcoins.py + meme/listings.py, round3.yml, Binance public data)
+**3a, big memecoins, daily** (DOGE, SHIB, PEPE, FLOKI, BONK, WIF, BOME, MEME, PEOPLE, TURBO, NEIRO, PNUT, ACT, TRUMP ...
+each from its listing, equal weight, Bitvavo cost 0.25% a side; 2019-23 vs 2024+, %/yr compounded):
+| | 2019-23 | 2024+ | worst drop 2024+ | 2024 / 2025 / 2026 |
+|---|---|---|---|---|
+| hold the meme basket | +108 | -12 | -91% | +271 / -79 / -13 |
+| BTC hold | +62 | +24 | -53% | +121 / -6 / -11 |
+| BTC alone, Donchian 20/10 | +46 | +22 | -29% | +66 / +8 / -3 |
+| memes, Donchian 20/10 (in on a 20-day high, out on a 10-day low) | +142 | +41 | -39% | +181 / -9 / +3 |
+| same + only while BTC > its 50-day average | +122 | +49 | -35% | +160 / +13 / +5 |
+- Trend rules (Donchian / above the 20-day average) beat holding memes on both periods; dip buying and momentum
+  rotation fail the holdout. But the 2019-23 numbers are DOGE/SHIB in 2021 and the holdout is mostly 2024: outside
+  those two bull runs the trend rules make about 0 (2025 -9 to +13, 2026 +3 to +5). Real but rests on rare manias,
+  -35 to -55% drops; better than holding memes, about BTC-trend quality per unit of risk. List chosen in 2026 (hindsight).
+**3b, new Binance perpetual listings** (912 since 2020, 63 memes): 64% are lower 30 days after the first close
+(median -11%, memes -22%). Shorting all listings: +1 to +4% per trade on 2024+, weak. Shorting new MEME listings:
++5 to +10% per trade on 2024+ (53 trades) but only 10 trades before 2024 to tune on, and the tails kill it: worst
+trade -587% without a stop (squeeze), and with stops the result swings from -0.6% to +10% depending on the setting.
+Not robust, and Binance futures are not offered to Dutch retail clients anyway.
+
 ## Videos (1 Nov 2026, via video.yml)
 - runitbankexe "Grok Bot night shift" (28 Oct): $1,500 -> $7,858 overnight, 47 trades / 41 wins. Staged: the BNB/BTC/ETH
   lock-screen prices (755.29 / 81,527.60 / 2,372.69) and the 96% battery never change from 00:06 to 06:04. Ad.
