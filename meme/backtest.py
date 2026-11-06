@@ -49,6 +49,7 @@ def prepare(cr: pd.DataFrame, mig: pd.Series, tr: pd.DataFrame) -> tuple[pd.Data
     coins = cr[["t_ms", "mint", "creator", "sol", "mayhem"]].rename(columns={"sol": "dev_buy", "t_ms": "create_ms"})
     tr = tr.merge(coins, on="mint")
     tr = tr.sort_values(["mint", "slot", "recv_ms"]).reset_index(drop=True)
+    tr["ts"] = tr.groupby("mint").ts.cummax()   # block times can step back a second between slots; keep them monotonic
     t0 = tr.groupby("mint").ts.transform("min").clip(upper=tr.create_ms // 1000)
     tr["age"] = tr.ts - t0
     tr = tr[tr.age <= WINDOW_MIN * 60].reset_index(drop=True)
