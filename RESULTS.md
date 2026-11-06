@@ -64,6 +64,25 @@ Last 12 months: BTC 3.5%, ETH 2.5%, SOL -0.3% if always collected, i.e. ~2% on c
 with exchange risk on top. Smart rules add nothing over "always on". Not worth doing now; only interesting when
 funding is high again (bull markets, like 2021 / 2024).
 
+## Round 5: the round-1 test on our own recordings (1-6 Nov 2026, backtest.yml run 42185217481)
+42,744 coins launched over 109 h, 4.0 M curve trades in their first hour; train 25,646 coins, holdout 17,098;
+same costs (0.2 SOL, 1.25%/side, 2 s latency). 3,773 rule combinations with 30+ train trades: 24 positive on train (0.6%).
+
+| family | train trades / SOL | holdout trades / SOL | holdout per trade |
+|---|---|---|---|
+| dip after first pump (best: 3x pump, 30-60% pullback, all checks, trailing stop) | 284 / +3.21 | 244 / -4.49 | -46% (range -8.0 to -0.3 SOL) |
+| curve progress | 136 / -0.83 | 85 / -1.60 | -47% |
+| early momentum | 85 / -1.66 | 18 / +0.42 | +59% on 18 trades (train negative: noise) |
+| copy trading (top 20 wallets) | 5,681 / -31.0 | 4,241 / -65.2 | -39% |
+| fast flip | 23,192 / -455 | 15,671 / -353 to -364 | -56% |
+| baseline (buy every coin at 5 s, 10 min) | 23,192 / -703 | 15,671 / -475 | -76% |
+
+Copy trading in depth: the best wallets do stay good (top 10 on train make +13,600 SOL on holdout coins, rank
+correlation 0.23-0.30), but they are bots holding a median 47 s with 100% win rate; copied with fees and curve fills
+every group loses: top 50 -7.8% per trade, 'copyable' -11%, most consistent -6.5% (all ranges below zero).
+Verdict: "dip after the first pump", the one candidate from round 1, fails the holdout again (-4.5 SOL). Round 1's
+rule was "if it fails there too, stop": pump.fun trading research stops here.
+
 ## Round 3: memecoins on an exchange (meme/bigcoins.py + meme/listings.py, round3.yml, Binance public data)
 **3a, big memecoins, daily** (DOGE, SHIB, PEPE, FLOKI, BONK, WIF, BOME, MEME, PEOPLE, TURBO, NEIRO, PNUT, ACT, TRUMP ...
 each from its listing, equal weight, Bitvavo cost 0.25% a side; 2019-23 vs 2024+, %/yr compounded):
